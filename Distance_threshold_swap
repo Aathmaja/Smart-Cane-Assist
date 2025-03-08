@@ -1,43 +1,42 @@
 /*
- * TinyFilmFestival - Distance-Based Heartbeat Animation Switch
+ * TinyFilmFestival - Multi-Threshold Distance Animation Example
  * 
- * This program uses an HC-SR04 ultrasonic sensor to switch between two animations:
- * - "Idle Heartbeat" (normal state)
- * - "Exploding Heartbeat" (when distance is below threshold)
- *
- * Hardware:
- * - Arduino UNO R4 WiFi
- * - HC-SR04 Ultrasonic Distance Sensor (Trigger: Pin 14, Echo: Pin 15)
- *
- * Uses Arduino LED Matrix Editor: https://ledmatrix-editor.arduino.cc/
+ * This example demonstrates switching between multiple animations based on 
+ * different distance thresholds. Each distance range triggers a different
+ * animation pattern.
+ * 
+ * Hardware Required:
+ * - Arduino UNO R4 WiFi with built-in LED Matrix
+ * - HC-SR04 ultrasonic distance sensor connected to pins 14 (trigger) and 15 (echo)
  */
 
 #include "TinyFilmFestival.h"
 #include "HCSR04.h"
-#include "HeartIdlereverse.h"
-#include "Heartburstreverse.h"
-
-// Function prototype (declaration) for readDistance
-float readDistance();
+#include "Caution.h"
+#include "Safe.h"
+#include "Stop.h"
 
 // Create instance of TinyFilmFestival
 TinyFilmFestival film;
 
 // Create Animation objects
-Animation idleAnim = HeartIdlereverse;
-Animation activeAnim = Heartburstreverse;
+Animation idleAnim = Safe;
+Animation cautionAnim = Caution;
+Animation goAnim = Stop;
 
 // Distance sensor setup
-const int triggerPin = 14;       // A0 Trigger pin for HC-SR04
-const int echoPin = 15;          // A1 Echo pin for HC-SR04
-const int maxDistance = 200;     // Maximum distance to measure (cm)
+int triggerPin = 14;          // Trigger pin for HC-SR04
+int echoPin = 15;             // Echo pin for HC-SR04
+int maxDistance = 200;        // Maximum distance to measure (cm)
 UltraSonicDistanceSensor distanceSensor(triggerPin, echoPin, maxDistance);
 
 // Distance control variables
-const float distanceThreshold = 50.0;  // Threshold for switching animation (cm)
-const int sensorInterval = 100;        // How often to read sensor (ms)
-unsigned long lastSensorRead = 0;      // Last sensor reading time
-float currentDistance = 0.0;           // Stores distance reading
+float distanceThreshold1 = 25.0;  // First threshold (cm)
+float distanceThreshold2 = 50.0;  // Second threshold (cm)
+float distanceThreshold3 = 75.0;  // Third threshold (cm)
+int sensorInterval = 100;         // How often to read sensor (ms)
+unsigned long lastSensorRead = 0;       // Last sensor reading time
+float currentDistance = 0.0;            // Variable to store distance reading
 
 void setup() 
 {
@@ -47,9 +46,9 @@ void setup()
     // Initialize the LED matrix
     film.begin();
     
-    // Start with idle heartbeat animation in loop mode
+    // Start with idle animation
     film.startAnimation(idleAnim, LOOP);
-    Serial.println("Starting with idle heartbeat animation");
+    Serial.println("Starting with idle animation");
 }
 
 void loop() 
@@ -57,23 +56,33 @@ void loop()
     // Read distance value with timing control
     float distance = readDistance();
     
-    if (distance >= 0) //simple error check to be sure it returned a distance value
+    if (distance >= 0)
     {
         Serial.print("Distance : ");
         Serial.print(distance);
-        Serial.print(" cm, Threshold: ");
-        Serial.println(distanceThreshold);
+        Serial.println(" cm");
 
-        // Switch animations based on distance
-        if (distance < distanceThreshold) 
+        // Switch animations based on distance ranges
+        // Very Close Range: 0cm to 25cm (exclusive)
+        // Triggers most dynamic animation for closest interactions
+        if ((distance >= 0) && (distance < distanceThreshold1))
         {
-            film.startAnimation(activeAnim, LOOP);
-            Serial.println("Playing Go");
-        } 
-        else 
+            film.startAnimation(cautionAnim, LOOP);
+            Serial.println("Being Caution (Very Close)");
+        }
+        // Close Range: 25cm (inclusive) to 50cm (exclusive)
+        // Active interaction range for direct manipulation
+        else if ((distance >= distanceThreshold1) && (distance < distanceThreshold2))
+        {
+            film.startAnimation(goAnim, LOOP);
+            Serial.println("Playing Go (Close)");
+        }
+        // Far Range: 75cm and beyond
+        // Default state for no active interaction
+        else if (distance >= distanceThreshold3)
         {
             film.startAnimation(idleAnim, LOOP);
-            Serial.println("Playing Idle");
+            Serial.println("Playing Idle (Far)");
         }
     }
     
