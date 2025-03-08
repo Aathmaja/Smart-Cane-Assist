@@ -1,0 +1,98 @@
+/*
+ * TinyFilmFestival - Distance-Based Heartbeat Animation Switch
+ * 
+ * This program uses an HC-SR04 ultrasonic sensor to switch between two animations:
+ * - "Idle Heartbeat" (normal state)
+ * - "Exploding Heartbeat" (when distance is below threshold)
+ *
+ * Hardware:
+ * - Arduino UNO R4 WiFi
+ * - HC-SR04 Ultrasonic Distance Sensor (Trigger: Pin 14, Echo: Pin 15)
+ *
+ * Uses Arduino LED Matrix Editor: https://ledmatrix-editor.arduino.cc/
+ */
+
+#include "TinyFilmFestival.h"
+#include "HCSR04.h"
+#include "HeartIdlereverse.h"
+#include "Heartburstreverse.h"
+
+// Function prototype (declaration) for readDistance
+float readDistance();
+
+// Create instance of TinyFilmFestival
+TinyFilmFestival film;
+
+// Create Animation objects
+Animation idleAnim = HeartIdlereverse;
+Animation activeAnim = Heartburstreverse;
+
+// Distance sensor setup
+const int triggerPin = 14;       // A0 Trigger pin for HC-SR04
+const int echoPin = 15;          // A1 Echo pin for HC-SR04
+const int maxDistance = 200;     // Maximum distance to measure (cm)
+UltraSonicDistanceSensor distanceSensor(triggerPin, echoPin, maxDistance);
+
+// Distance control variables
+const float distanceThreshold = 50.0;  // Threshold for switching animation (cm)
+const int sensorInterval = 100;        // How often to read sensor (ms)
+unsigned long lastSensorRead = 0;      // Last sensor reading time
+float currentDistance = 0.0;           // Stores distance reading
+
+void setup() 
+{
+    // Initialize serial for debug output
+    Serial.begin(9600);
+    
+    // Initialize the LED matrix
+    film.begin();
+    
+    // Start with idle heartbeat animation in loop mode
+    film.startAnimation(idleAnim, LOOP);
+    Serial.println("Starting with idle heartbeat animation");
+}
+
+void loop() 
+{
+    // Read distance value with timing control
+    float distance = readDistance();
+    
+    if (distance >= 0) //simple error check to be sure it returned a distance value
+    {
+        Serial.print("Distance : ");
+        Serial.print(distance);
+        Serial.print(" cm, Threshold: ");
+        Serial.println(distanceThreshold);
+
+        // Switch animations based on distance
+        if (distance < distanceThreshold) 
+        {
+            film.startAnimation(activeAnim, LOOP);
+            Serial.println("Playing Go");
+        } 
+        else 
+        {
+            film.startAnimation(idleAnim, LOOP);
+            Serial.println("Playing Idle");
+        }
+    }
+    
+    // Update the animation frame
+    film.update();
+}
+
+// Reads distance from the HC-SR04 sensor at specified intervals
+// Function returns float since HC-SR04 can measure partial centimeters
+float readDistance()
+{
+    unsigned long currentTime = millis();
+    
+    // Only read sensor if interval has elapsed
+    if (currentTime - lastSensorRead >= sensorInterval)
+    {
+        currentDistance = distanceSensor.measureDistanceCm();
+        lastSensorRead = currentTime;
+    }
+    
+    return currentDistance;
+}
