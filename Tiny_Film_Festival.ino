@@ -1,14 +1,12 @@
 /*
  * TinyFilmFestival - Multi-Threshold Distance Animation Example
  * 
- * This example demonstrates switching between multiple animations based on 
- * different distance thresholds. Each distance range triggers a different
- * animation pattern.
- * 
- * Hardware Required:
- * - Arduino UNO R4 WiFi with built-in LED Matrix
- * - HC-SR04 ultrasonic distance sensor connected to pins 14 (trigger) and 15 (echo)
- */
+ *Tiny Film Festival
+    *Aathmaja Ananth
+    *DIGF 2002-501: Physical Computing
+    *Professor Kate Hartman
+    *March 11, 2025
+    */
 
 #include "TinyFilmFestival.h"
 #include "HCSR04.h"
