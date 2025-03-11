@@ -1,6 +1,4 @@
 /*
- * TinyFilmFestival - Multi-Threshold Distance Animation Example
- * 
  *Tiny Film Festival
     *Aathmaja Ananth
     *DIGF 2002-501: Physical Computing
